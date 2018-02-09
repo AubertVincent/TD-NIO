@@ -36,9 +36,6 @@ public class NioClient implements Runnable {
 
 	// The message to send to the server
 	String msg;
-	
-	// outBuffers contains the data to write per channel
-	Hashtable<SocketChannel, ByteBuffer> outBuffers;
 
 	/**
 	 * NIO engine initialization for server side
@@ -203,7 +200,6 @@ public class NioClient implements Runnable {
 	 */
 	private void handleWrite(SelectionKey key) throws IOException {
 		SocketChannel socketChannel = (SocketChannel) key.channel();
-		ByteBuffer outBuffer = outBuffers.get(socketChannel);
 		if (outBuffer.remaining() > 0) {
 			try {
 				socketChannel.write(outBuffer);
@@ -226,8 +222,8 @@ public class NioClient implements Runnable {
 	 */
 	public void send(byte[] data) {
 		// We suppose that the previous data in outBffer have already been sent
-		// or we di not mind loosing them
-		outBuffers.put(clientChannel, ByteBuffer.wrap(data));
+		// or we do not mind loosing them
+		outBuffer = ByteBuffer.wrap(data);
 		// indicate we want to select OP_WRITE from now
 		SelectionKey key = clientChannel.keyFor(this.selector);
 		key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);

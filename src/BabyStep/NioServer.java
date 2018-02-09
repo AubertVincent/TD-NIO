@@ -56,6 +56,9 @@ public class NioServer implements Runnable {
 		hostAddress = InetAddress.getByName("localhost");
 		InetSocketAddress isa = new InetSocketAddress(hostAddress, port);
 		serverChannel.socket().bind(isa);
+		
+		// create the outBuffers ByteBuffer table
+		outBuffers = new Hashtable<SocketChannel, ByteBuffer>();
 
 		// be notified when connection requests arrive
 		serverChannel.register(selector, SelectionKey.OP_ACCEPT);
