@@ -33,7 +33,8 @@ public class NioServer implements Runnable {
 	// Ip address of the server
 	private InetAddress hostAddress;
 
-	// to complete
+	// Contains the data to write per channel
+	Hashtable<SocketChannel, ByteBuffer> outBuffers;
 
 
 	/**
@@ -166,7 +167,28 @@ public class NioServer implements Runnable {
 	 * @param the key of the channel on which the incoming data waits to be received 
 	 */
 	private void handleRead(SelectionKey key) {
-		// todo
+		SocketChannel client = (SocketChannel)key.channel();
+		ByteBuffer bb = ByteBuffer.allocate(5);
+		int nbRead = 0;
+		try {
+			nbRead = client.read(bb);
+		} catch(IOException e) {
+			// Connection closed
+			key.cancel();
+			try {
+				client.close();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			return;
+		}
+		if(nbRead < 0) {
+			key.cancel();
+			return;
+		}
+		System.out.println(new String(bb.array()));
+		send(client, "pong".getBytes());
 	}
 
 
@@ -175,7 +197,22 @@ public class NioServer implements Runnable {
 	 * @param the key of the channel on which data can be sent 
 	 */
 	private void handleWrite(SelectionKey key) {
-		// todo
+		SocketChannel client = (SocketChannel) key.channel();
+		ByteBuffer bb = outBuffers.get(client);
+		if(bb.remaining()>0)	
+			try {
+				client.write(bb);
+				key.interestOps(SelectionKey.OP_READ);
+			} catch(IOException e) {
+				// Channel has been closed
+				key.cancel();
+				try {
+					client.close();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
 	}
 
 	/**
@@ -184,7 +221,8 @@ public class NioServer implements Runnable {
 	 * @param the data that should be sent
 	 */
 	public void send(SocketChannel socketChannel, byte[] data) {
-		// todo
+		outBuffers.put(socketChannel, ByteBuffer.wrap(data));
+		socketChannel.keyFor(this.selector).interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 	}
 
 	public static void main(String args[]){
