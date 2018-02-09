@@ -13,6 +13,8 @@ import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.*;
 
+import javax.swing.plaf.SliderUI;
+
 /**
  * NIO client
  * RICM4 TP
@@ -34,7 +36,9 @@ public class NioClient implements Runnable {
 
 	// The message to send to the server
 	String msg;
-
+	
+	// outBuffers contains the data to write per channel
+	Hashtable<SocketChannel, ByteBuffer> outBuffers;
 
 	/**
 	 * NIO engine initialization for server side
@@ -169,8 +173,27 @@ public class NioClient implements Runnable {
 	 * Handle incoming data event
 	 * @param the key of the channel on which the incoming data waits to be received 
 	 */
-	private void handleRead(SelectionKey key){
-		// todo
+	private void handleRead(SelectionKey key) throws IOException {
+		SocketChannel socketChannel = (SocketChannel) key.channel();
+		ByteBuffer inBuffer = ByteBuffer.allocate(5);
+
+		int nbread = 0;
+		try {
+			nbread = socketChannel.read(inBuffer);
+		} catch (IOException e) {
+			key.cancel();
+			socketChannel.close();
+			return;
+		}
+		if (nbread == -1) {
+			// The socket has been shutdown remotely cleanly
+			key.channel().close();
+			key.cancel();
+			return;
+		}
+		// Process the received data, may be incomplete !
+		// deliver(this, socketChannel, inBuffer.array(), nbread);
+		System.out.println(new String(inBuffer.array()));
 	}
 
 
@@ -178,25 +201,43 @@ public class NioClient implements Runnable {
 	 * Handle outgoing data event
 	 * @param the key of the channel on which data can be sent 
 	 */
-	private void handleWrite(SelectionKey key) {
-       // todo
+	private void handleWrite(SelectionKey key) throws IOException {
+		SocketChannel socketChannel = (SocketChannel) key.channel();
+		ByteBuffer outBuffer = outBuffers.get(socketChannel);
+		if (outBuffer.remaining() > 0) {
+			try {
+				socketChannel.write(outBuffer);
+				key.interestOps(SelectionKey.OP_READ);
+			} catch (IOException e) {
+				// The channel has been closed
+				key.cancel();
+				socketChannel.close();
+				return;
+			}
+		} else {
+			// TODO
+		}
 	}
 
 
 	/**
 	 * Send data
-	 * @param the key of the channel on which data that should be sent
 	 * @param the data that should be sent
 	 */
 	public void send(byte[] data) {
-       // todo
+		// We suppose that the previous data in outBffer have already been sent
+		// or we di not mind loosing them
+		outBuffers.put(clientChannel, ByteBuffer.wrap(data));
+		// indicate we want to select OP_WRITE from now
+		SelectionKey key = clientChannel.keyFor(this.selector);
+		key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 	}
 
 
 	public static void main(String args[]){
 		int serverPort = NioServer.DEFAULT_SERVER_PORT;
 		String serverAddress = "localhost";
-		String msg = "defaultMsg";
+		String msg = "ping";
 		String arg;
 
 		try {
