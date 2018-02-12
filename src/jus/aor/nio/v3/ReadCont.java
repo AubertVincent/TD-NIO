@@ -12,6 +12,7 @@ public class ReadCont extends Continuation {
 	private ByteBuffer readBuf;
 	private ByteBuffer readInt;
 	private int state;
+	private int nbSteps;
 	
 	private static final int READINT = 0;
 	private static final int READMSG = 1;
@@ -23,6 +24,7 @@ public class ReadCont extends Continuation {
 		super(sc);
 		readInt = ByteBuffer.allocate(4);
 		state = READINT;
+		nbSteps = 0;
 	}
 
 	/**
@@ -34,6 +36,7 @@ public class ReadCont extends Continuation {
 		switch(state) {
 		case(READINT):
 			socketChannel.write(readInt);
+			nbSteps++;
 			if(readInt.remaining() <= 0) {
 				readBuf = ByteBuffer.allocate(bytesToInt(readInt));
 				state = READMSG;
@@ -41,14 +44,24 @@ public class ReadCont extends Continuation {
 			break;
 		case(READMSG):
 			socketChannel.write(readBuf);
+			nbSteps++;
 			if(readBuf.remaining() <= 0) {
 				readInt.clear();
 				state = READINT;
-				return new Message(readBuf.array());
+				Message msg = new Message(readBuf.array(), nbSteps);
+				nbSteps = 0;
+				return msg;
 			}
 			break;
 		default:
 		}
 		return null;
+	}
+	
+	/**
+	 * @return the number of steps done
+	 */
+	protected int getNbSteps() {
+		return nbSteps;
 	}
 }
