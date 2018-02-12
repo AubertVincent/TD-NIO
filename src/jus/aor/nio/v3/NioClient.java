@@ -72,7 +72,7 @@ public class NioClient implements Runnable{
 	 */
 	public void run(){
 		log.log(Level.FINE,"NioClient running");
-		// control the exexution of the client
+		// control the execution of the client
 		for(int iteration=0; iteration<nbIterations;iteration++){
 			try{
 				selector.select();

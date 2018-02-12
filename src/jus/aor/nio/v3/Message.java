@@ -31,7 +31,7 @@ public class Message implements Serializable {
 	 * @param id l'identificateur du client
 	 */
 	public Message(int id){
-		this.data="";
+		this.data="Ceci est un message de test";
 		this.id = id;
 		this.date = Calendar.getInstance();
 		this.nexchanges = 0;
