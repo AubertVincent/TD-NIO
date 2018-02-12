@@ -5,25 +5,23 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 /**
- * @author morat
+ * @author morat, chanet
  */
 public class ReadCont extends Continuation {
 
 	private ByteBuffer readBuf;
-	private ByteBuffer readInt;
-	private int state;
+	private State state;
 	private int nbSteps;
 	
-	private static final int READINT = 0;
-	private static final int READMSG = 1;
+	private enum State{COMPLETE, READING_LENGTH,READING_DATA;}
 	
 	/**
 	 * @param sc
 	 */
 	public ReadCont(SocketChannel sc) {
 		super(sc);
-		readInt = ByteBuffer.allocate(4);
-		state = READINT;
+		readBuf = ByteBuffer.allocate(4);
+		state = State.COMPLETE;
 		nbSteps = 0;
 	}
 
@@ -34,23 +32,25 @@ public class ReadCont extends Continuation {
 	 */
 	protected Message handleRead() throws IOException, ClassNotFoundException {
 		switch(state) {
-		case(READINT):
-			socketChannel.write(readInt);
-			nbSteps++;
-			if(readInt.remaining() <= 0) {
-				readBuf = ByteBuffer.allocate(bytesToInt(readInt));
-				state = READMSG;
-			}
-			break;
-		case(READMSG):
+		case COMPLETE:
+			readBuf.clear();
+			readBuf.allocate(4);
+			state = State.READING_LENGTH;
+			nbSteps = 0;
+		case READING_LENGTH:
 			socketChannel.write(readBuf);
 			nbSteps++;
 			if(readBuf.remaining() <= 0) {
-				readInt.clear();
-				state = READINT;
-				Message msg = new Message(readBuf.array(), nbSteps);
-				nbSteps = 0;
-				return msg;
+				readBuf = ByteBuffer.allocate(bytesToInt(readBuf));
+				state = State.READING_DATA;
+			}
+			break;
+		case READING_DATA:
+			socketChannel.write(readBuf);
+			nbSteps++;
+			if(readBuf.remaining() <= 0) {
+				state = State.COMPLETE;
+				return new Message(readBuf.array(), nbSteps);
 			}
 			break;
 		default:
