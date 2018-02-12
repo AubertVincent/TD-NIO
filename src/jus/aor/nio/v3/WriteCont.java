@@ -16,7 +16,7 @@ public class WriteCont extends Continuation{
 	// initial state
 	protected State state = State.WRITING_DONE;
 	// the list of bytes messages to write
-	protected ArrayList<byte[]> msgs = new ArrayList<>() ;
+	protected ArrayList<Message> msgs = new ArrayList<>() ;
 	// buf contains the byte array that is currently written
 	protected ByteBuffer buf = null;
 
@@ -35,27 +35,55 @@ public class WriteCont extends Continuation{
 	 * @return true if the msgs are not completly write.
 	 */
 	protected boolean isPendingMsg(){
-		// TODO
-		System.out.println("NOT IMPLEMENTED YET");
-		return false;
+		return !msgs.isEmpty();
 	}
 
 
 	/**
+	 * Prepare the message. Put it in the waiting queue.
 	 * @param data
 	 * @throws IOException 
 	 */
 	protected void sendMsg(Message data) throws IOException{
-		// TODO
-		System.out.println("NOT IMPLEMENTED YET");
+		msgs.add(data);
+		key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 	}
 
 
 	/**
 	 * @throws IOException
 	 */
-	protected void handleWrite()throws IOException{
-		// TODO
-		System.out.println("NOT IMPLEMENTED YET");
+	protected void handleWrite() throws IOException {
+		SocketChannel socketChannel = (SocketChannel) key.channel();
+		switch (state) {
+		case WRITING_DONE:
+			buf = intToBytes(msgs.get(0).marshall().length);
+			state = State.WRITING_LENGTH;
+		case WRITING_LENGTH:
+			socketChannel.write(buf);
+			if (buf.remaining() == 0) {
+				state = State.WRITING_DATA;
+				buf = ByteBuffer.wrap(msgs.get(0).marshall());
+				msgs.remove(0);
+			}
+			break;
+		case WRITING_DATA:
+			if (buf.remaining() > 0) {
+				try {
+					socketChannel.write(buf);
+				} catch (IOException e) {
+					// The channel has been closed
+					key.cancel();
+					socketChannel.close();
+					return;
+				}
+			} else {
+				if (!isPendingMsg()) {
+					key.interestOps(SelectionKey.OP_READ);
+				}
+				state = State.WRITING_DONE;
+			}
+			break;
+		}
 	}
 }
