@@ -57,7 +57,7 @@ public class NioClient implements Runnable{
 		clientChannel.configureBlocking(false);
 		// be notified when connection requests arrive
 		clientChannel.register(selector, SelectionKey.OP_CONNECT);
-		// les automates 
+		// les automates
 		readCont = new ReadCont(clientChannel);
 		writeCont = new WriteCont(clientChannel.keyFor(this.selector), clientChannel);
 		// connection to the server
@@ -91,6 +91,7 @@ public class NioClient implements Runnable{
 				e.printStackTrace(System.err);
 			}
 		}
+		log.log(Level.FINE,"NioClient " + nbIterations + " steps done");
 	}
 	/**
 	 * Accept a connection and make it non-blocking

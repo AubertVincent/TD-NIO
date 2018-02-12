@@ -10,6 +10,7 @@ import java.nio.channels.SocketChannel;
 public class ReadCont extends Continuation {
 
 	private ByteBuffer readBuf;
+	private ByteBuffer readInt;
 	private State state;
 	private int nbSteps;
 	
@@ -20,7 +21,7 @@ public class ReadCont extends Continuation {
 	 */
 	public ReadCont(SocketChannel sc) {
 		super(sc);
-		readBuf = ByteBuffer.allocate(4);
+		readInt = ByteBuffer.allocate(4);
 		state = State.COMPLETE;
 		nbSteps = 0;
 	}
@@ -33,20 +34,19 @@ public class ReadCont extends Continuation {
 	protected Message handleRead() throws IOException, ClassNotFoundException {
 		switch(state) {
 		case COMPLETE:
-			readBuf.clear();
-			readBuf.allocate(4);
+			readInt.clear();
 			state = State.READING_LENGTH;
 			nbSteps = 0;
 		case READING_LENGTH:
-			socketChannel.write(readBuf);
+			socketChannel.read(readInt);
 			nbSteps++;
-			if(readBuf.remaining() <= 0) {
-				readBuf = ByteBuffer.allocate(bytesToInt(readBuf));
+			if(readInt.remaining() <= 0) {
+				readBuf = ByteBuffer.allocate(bytesToInt(readInt));
 				state = State.READING_DATA;
 			}
 			break;
 		case READING_DATA:
-			socketChannel.write(readBuf);
+			socketChannel.read(readBuf);
 			nbSteps++;
 			if(readBuf.remaining() <= 0) {
 				state = State.COMPLETE;
