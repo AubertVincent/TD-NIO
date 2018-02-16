@@ -13,6 +13,7 @@ public class ReadCont extends Continuation {
 	private ByteBuffer readInt;
 	private State state;
 	private int nbSteps;
+	private int length;
 	
 	private enum State{COMPLETE, READING_LENGTH,READING_DATA;}
 	
@@ -22,8 +23,10 @@ public class ReadCont extends Continuation {
 	public ReadCont(SocketChannel sc) {
 		super(sc);
 		readInt = ByteBuffer.allocate(4);
+		readBuf = ByteBuffer.allocate(2000000000);
 		state = State.COMPLETE;
 		nbSteps = 0;
+		length = 0;
 	}
 
 	/**
@@ -37,20 +40,28 @@ public class ReadCont extends Continuation {
 			readInt.clear();
 			state = State.READING_LENGTH;
 			nbSteps = 0;
+			length = 0;
 		case READING_LENGTH:
 			socketChannel.read(readInt);
-			nbSteps++;
 			if(readInt.remaining() <= 0) {
-				readBuf = ByteBuffer.allocate(bytesToInt(readInt));
+//				readBuf = ByteBuffer.allocate(bytesToInt(readInt));
+				length = bytesToInt(readInt);
+				readBuf.position(0);
+				readBuf.limit(length);
 				state = State.READING_DATA;
+			} else {
+				nbSteps++;
+				break;
 			}
-			break;
 		case READING_DATA:
 			socketChannel.read(readBuf);
 			nbSteps++;
 			if(readBuf.remaining() <= 0) {
 				state = State.COMPLETE;
-				return new Message(readBuf.array(), nbSteps);
+				byte[] dst = new byte[length];
+				readBuf.position(0);
+				readBuf.get(dst);
+				return new Message(dst, nbSteps);
 			}
 			break;
 		default:
