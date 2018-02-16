@@ -13,9 +13,11 @@ public class ReadCont extends Continuation {
 	private State state;
 	private int nbSteps;
 	private int length;
-	
-	private enum State{COMPLETE, READING_LENGTH, READING_DATA;}
-	
+
+	private enum State {
+		COMPLETE, READING_LENGTH, READING_DATA;
+	}
+
 	/**
 	 * @param sc
 	 */
@@ -33,7 +35,7 @@ public class ReadCont extends Continuation {
 	 * @throws ClassNotFoundException
 	 */
 	protected Message handleRead() throws IOException, ClassNotFoundException {
-		switch(state) {
+		switch (state) {
 		case COMPLETE:
 			readBuf.position(0);
 			readBuf.limit(4);
@@ -42,7 +44,7 @@ public class ReadCont extends Continuation {
 			length = 0;
 		case READING_LENGTH:
 			socketChannel.read(readBuf);
-			if(readBuf.remaining() <= 0) {
+			if (readBuf.remaining() <= 0) {
 				length = bytesToInt(readBuf);
 				readBuf.position(0);
 				readBuf.limit(length);
@@ -54,7 +56,7 @@ public class ReadCont extends Continuation {
 		case READING_DATA:
 			socketChannel.read(readBuf);
 			nbSteps++;
-			if(readBuf.remaining() <= 0) {
+			if (readBuf.remaining() <= 0) {
 				state = State.COMPLETE;
 				byte[] dst = new byte[length];
 				readBuf.position(0);
@@ -66,7 +68,7 @@ public class ReadCont extends Continuation {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * @return the number of steps done
 	 */

@@ -7,49 +7,50 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 
 /**
- * @author morat 
+ * @author morat
  */
-public class WriteCont extends Continuation{
+public class WriteCont extends Continuation {
 	private SelectionKey key;
+
 	// state automata
-	private enum State{WRITING_DONE, WRITING_LENGTH, WRITING_DATA;}
+	private enum State {
+		WRITING_DONE, WRITING_LENGTH, WRITING_DATA;
+	}
+
 	// initial state
 	protected State state = State.WRITING_DONE;
 	// the list of bytes messages to write
-	protected ArrayList<Message> msgs = new ArrayList<>() ;
+	protected ArrayList<Message> msgs = new ArrayList<>();
 	// buf contains the byte array that is currently written
 	protected ByteBuffer buf = null;
-
 
 	/**
 	 * @param k
 	 * @param sc
 	 */
-	public WriteCont(SelectionKey k,SocketChannel sc){
+	public WriteCont(SelectionKey k, SocketChannel sc) {
 		super(sc);
 		buf = ByteBuffer.allocate(100000000);
 		key = k;
 	}
 
-
 	/**
 	 * @return true if the msgs are not completly write.
 	 */
-	protected boolean isPendingMsg(){
+	protected boolean isPendingMsg() {
 		return !msgs.isEmpty();
 	}
 
-
 	/**
 	 * Prepare the message. Put it in the waiting queue.
+	 * 
 	 * @param data
-	 * @throws IOException 
+	 * @throws IOException
 	 */
-	protected void sendMsg(Message data) throws IOException{
+	protected void sendMsg(Message data) throws IOException {
 		msgs.add(data);
 		key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 	}
-
 
 	/**
 	 * @throws IOException
