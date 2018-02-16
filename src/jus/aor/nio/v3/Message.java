@@ -70,7 +70,7 @@ public class Message implements Serializable {
 		this(marshalled);
 		this.date = Calendar.getInstance();
 		this.nsteps=nbSteps;
-		if(data.length() < 2000000000-data.length()-1)
+		if(data.length() < 100000000-data.length()-1)
 			this.data = toString()+" "+data;
 	}
 	/**
