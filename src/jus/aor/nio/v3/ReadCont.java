@@ -14,7 +14,7 @@ public class ReadCont extends Continuation {
 	private int nbSteps;
 	private int length;
 	
-	private enum State{COMPLETE, READING_LENGTH,READING_DATA;}
+	private enum State{COMPLETE, READING_LENGTH, READING_DATA;}
 	
 	/**
 	 * @param sc

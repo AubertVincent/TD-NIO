@@ -12,7 +12,7 @@ import java.util.ArrayList;
 public class WriteCont extends Continuation{
 	private SelectionKey key;
 	// state automata
-	private enum State{WRITING_DONE, WRITING_LENGTH,WRITING_DATA;}
+	private enum State{WRITING_DONE, WRITING_LENGTH, WRITING_DATA;}
 	// initial state
 	protected State state = State.WRITING_DONE;
 	// the list of bytes messages to write
