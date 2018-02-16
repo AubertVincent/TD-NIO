@@ -27,6 +27,7 @@ public class WriteCont extends Continuation{
 	 */
 	public WriteCont(SelectionKey k,SocketChannel sc){
 		super(sc);
+		buf = ByteBuffer.allocate(100000000);
 		key = k;
 	}
 
@@ -57,13 +58,21 @@ public class WriteCont extends Continuation{
 		SocketChannel socketChannel = (SocketChannel) key.channel();
 		switch (state) {
 		case WRITING_DONE:
-			buf = intToBytes(msgs.get(0).marshall().length);
+//			buf = intToBytes(msgs.get(0).marshall().length);
+			buf.position(0);
+			buf.limit(4);
+			buf.putInt(msgs.get(0).marshall().length);
+			buf.position(0);
 			state = State.WRITING_LENGTH;
 		case WRITING_LENGTH:
 			socketChannel.write(buf);
 			if (buf.remaining() == 0) {
 				state = State.WRITING_DATA;
-				buf = ByteBuffer.wrap(msgs.get(0).marshall());
+//				buf = ByteBuffer.wrap(msgs.get(0).marshall());
+				buf.position(0);
+				buf.limit(msgs.get(0).marshall().length);
+				buf.put(msgs.get(0).marshall());
+				buf.position(0);
 				msgs.remove(0);
 			}
 			break;
