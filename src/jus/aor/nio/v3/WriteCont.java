@@ -58,7 +58,6 @@ public class WriteCont extends Continuation{
 		SocketChannel socketChannel = (SocketChannel) key.channel();
 		switch (state) {
 		case WRITING_DONE:
-//			buf = intToBytes(msgs.get(0).marshall().length);
 			buf.position(0);
 			buf.limit(4);
 			buf.putInt(msgs.get(0).marshall().length);
@@ -68,7 +67,6 @@ public class WriteCont extends Continuation{
 			socketChannel.write(buf);
 			if (buf.remaining() == 0) {
 				state = State.WRITING_DATA;
-//				buf = ByteBuffer.wrap(msgs.get(0).marshall());
 				buf.position(0);
 				buf.limit(msgs.get(0).marshall().length);
 				buf.put(msgs.get(0).marshall());
