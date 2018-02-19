@@ -7,7 +7,7 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 
 /**
- * @author morat 
+ * @author morat chanet charlot
  */
 public class WriteCont extends Continuation{
 	private SelectionKey key;
