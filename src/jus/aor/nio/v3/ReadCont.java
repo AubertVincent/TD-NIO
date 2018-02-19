@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 /**
- * @author morat, chanet
+ * @author morat, chanet, charlot
  */
 public class ReadCont extends Continuation {
 
